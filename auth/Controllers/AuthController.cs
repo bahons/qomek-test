@@ -83,7 +83,7 @@ namespace auth.Controllers
         {
             var claims = new List<Claim>{ new(ClaimTypes.Name, name) };
 
-            //claims.Add(new(ClaimTypes.Sid, ide));
+            claims.Add(new Claim("id", ide));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Jwt.SigningKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
