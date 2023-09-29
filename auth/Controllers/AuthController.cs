@@ -7,6 +7,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using auth.Options;
 using Microsoft.Extensions.Options;
+using auth.DbContext;
+using Microsoft.EntityFrameworkCore;
+using auth.Models.Domain;
 
 namespace auth.Controllers
 {
@@ -15,10 +18,12 @@ namespace auth.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthOptions _options;
+        private readonly AppDbContext _dbContext;
 
-        public AuthController(IOptions<AuthOptions> options)
+        public AuthController(IOptions<AuthOptions> options, AppDbContext appDbContext)
         {
             _options = options.Value;
+            _dbContext = appDbContext;
         }
 
 
@@ -26,15 +31,24 @@ namespace auth.Controllers
         [HttpPost("login")]
         public async Task<JsonResult> Login([FromBody] LoginModel model)
         {
-            await Task.Delay(500);
-            if(model.Login == "test" && model.Password == "test")
+            if(ModelState.IsValid)
             {
-                return new JsonResult(new LoginModel.Result { Login = "test", Token = GenerateJwt ("test", "ide")});
+                try
+                {
+                    User user = await _dbContext.Users.Where(p => p.Login == model.Login).FirstAsync();
+                    if (user == null)
+                        return new JsonResult("No Login");
+                    else if (user.Password != model.Password)
+                        return new JsonResult("No Valid Password");
+                    else
+                        return new JsonResult(new LoginModel.Result { Login = user.Login, Token = GenerateJwt(user.Login, user.Guid) });
+                }
+                catch(Exception ex)
+                {
+                    return new JsonResult( ex.Message );
+                }
             }
-            else
-            {
-                return new JsonResult("No auth");
-            }
+            return new JsonResult("No Login and Password");
         }
 
 
@@ -42,16 +56,16 @@ namespace auth.Controllers
         [HttpPost("register")]
         public async Task<JsonResult> Register([FromBody] RegisterModel model)
         {
-            await Task.Delay(500);
             if(ModelState.IsValid)
             {
-                if (model.Login == "test" && model.Password == "test")
-                {
-                    return new JsonResult("Register.token123...");
-                }
+                User? user = await _dbContext.Users.Where(p => p.Login == model.Login).FirstOrDefaultAsync();
+                if (user != null) return new JsonResult("Логин имеется");
                 else
                 {
-                    return new JsonResult(StatusCodes.Status401Unauthorized);
+                    user = new User { Guid = Guid.NewGuid().ToString(), Login = model.Login, Password = model.Password };
+                    await _dbContext.Users.AddAsync(user);
+                    await _dbContext.SaveChangesAsync();
+                    return new JsonResult(new LoginModel.Result { Login = user.Login, Token = GenerateJwt(user.Login, user.Guid) });
                 }
             }
             return new JsonResult("No compare");
@@ -68,7 +82,8 @@ namespace auth.Controllers
         private string GenerateJwt(string name, string ide)
         {
             var claims = new List<Claim>{ new(ClaimTypes.Name, name) };
-            claims.Add(new(ClaimTypes.Sid, ide));
+
+            //claims.Add(new(ClaimTypes.Sid, ide));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Jwt.SigningKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -81,8 +96,8 @@ namespace auth.Controllers
                 expires: expires,
                 signingCredentials: credentials
             );
-
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 }

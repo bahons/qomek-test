@@ -11,7 +11,7 @@ builder.Services.AddOcelot(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -27,6 +27,7 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gateway.Web
 app.UseRouting();
 
 app.UseAuthorization();
+app.UseHealthChecks("/");
 
 app.UseEndpoints(endpoints =>
 {
