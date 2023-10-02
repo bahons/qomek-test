@@ -1,4 +1,5 @@
 using message.Options;
+using message.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.Services.AddStackExchangeRedisCache(option =>
 });
 
 
+builder.Services.AddTransient<CacheService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();

@@ -19,10 +19,10 @@ namespace message.Controllers
         private CacheService _cacheService;
         private IHttpContextAccessor _context;
 
-        public MessageController(CacheService cacheService, IOptions<AuthOptions> options, IHttpContextAccessor context)
+        public MessageController(CacheService cacheService, IOptions<AuthOptions> authoptions, IHttpContextAccessor context)
         {
             _cacheService = cacheService;
-            _options = (AuthOptions?)options;
+            _options = authoptions.Value;
             _context = context;
         }
 
@@ -62,8 +62,8 @@ namespace message.Controllers
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
 
