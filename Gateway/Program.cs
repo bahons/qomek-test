@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
@@ -7,6 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
+
+builder.Services.AddAuthentication()
+        .AddJwtBearer("TestKey", x =>
+        {
+            x.Authority = "test";
+            x.Audience = "BurgerAudience";
+        });
 builder.Services.AddOcelot(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -26,7 +34,9 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gateway.Web
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseHealthChecks("/");
 
 app.UseEndpoints(endpoints =>

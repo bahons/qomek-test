@@ -29,16 +29,14 @@ namespace blog.Controllers
             _context = context;
         }
 
+
         /// <summary>
         /// Один пост
         /// </summary>
         /// <param name="Id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        public async Task<Post> Get(int Id)
-        {
-            return await _repo.GetPostById(Id);
-        }
+        public async Task<Post> Get(int Id) => await _repo.GetPostById(Id);
 
 
         /// <summary>
@@ -46,11 +44,10 @@ namespace blog.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public async Task<List<Post>> Get(ClaimsPrincipal claimsPrincipal)
-        {
-            //var userguid = claimsPrincipal.FindFirst(ClaimTypes.Sid)?.Value ?? null;
-            return await _repo.GetAllPosts(User.Claims.FirstOrDefault(p=>p.Type == "").Value);
-        }
+        public async Task<List<Post>> Get() => await _repo.GetAllPosts(ValidateJwtToken(_context.HttpContext.Request.Headers["Authorization"]
+            .FirstOrDefault()?
+            .Split(" ")
+            .Last()));
 
 
         /// <summary>
@@ -75,7 +72,28 @@ namespace blog.Controllers
         }
 
 
+        [HttpDelete]
+        public IActionResult Delete(int Id)
+        {
+            try
+            {
+                _repo.DeletePost(Id);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
+
+
+
+        /// <summary>
+        /// Валидация токена
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         public string ValidateJwtToken(string token)
         {
             if (String.IsNullOrEmpty(token))
@@ -89,8 +107,8 @@ namespace blog.Controllers
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
                     // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
