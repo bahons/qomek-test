@@ -107,21 +107,24 @@ namespace blog.Controllers
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
+<<<<<<< HEAD
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
+=======
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+>>>>>>> d266f4f12d09702b647e1f63740bd3dd5703ac4f
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
                 var userId = jwtToken.Claims.First(x => x.Type == "id").Value;
 
-                // return user id from JWT token if validation successful
                 return userId;
             }
             catch
             {
-                // return null if validation fails
                 return null;
             }
         }
