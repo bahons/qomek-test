@@ -12,7 +12,7 @@ builder.Services.AddStackExchangeRedisCache(option =>
 
 
 builder.Services.AddMemoryCache();
-
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection("Auth"));
